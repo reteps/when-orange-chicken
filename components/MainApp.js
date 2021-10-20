@@ -1,28 +1,7 @@
-// import './App.css';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { provider, db } from 'utils/firebase';
-// import getMenu from './utils/food';
-import {
-  signInWithPopup,
-  getAuth,
-  // GoogleAuthProvider,
-  setPersistence,
-  browserLocalPersistence,
-} from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import Button from '@mui/material/Button';
-import { IconButton, TextField, Toolbar } from '@mui/material';
-import TimePicker from '@mui/lab/TimePicker';
-import DateAdapter from '@mui/lab/AdapterDayjs';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
-import AppBar from '@mui/material/AppBar'
-import FoodSelect from 'components/FoodSelect';
-function App() {
+import React from 'react';
+
+
+function MainApp() {
   const auth = getAuth();
   const [value, setValue] = useState(new Date('2014-08-18T12:00:00'));
   const [authorized, setAuthorized] = useState(false);
@@ -113,19 +92,78 @@ function App() {
     setAge(event.target.value);
   };
 
-  return (
-    <div className="App">
-      <AppBar>
-        <Toolbar>
-          <IconButton>
-            <MenuIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      {authorized ? <MainApp /> :}
-      <button onClick={getMenuWrapper}> fuck you </button>
-    </div>
-  );
-}
+(
+  <>
+    <button onClick={handleSignout}> Sign out </button>
 
-export default App;
+    <form onSubmit={updatePrefs}>
+      <input
+        value={phoneNumber}
+        onChange={(e) => setPhoneNumber(e.target.value)}
+        placeholder="phone number"
+      ></input>
+      <input
+        value={food}
+        onChange={(e) => setFood(e.target.value)}
+        placeholder="food"
+      ></input>
+      <Button type="submit" variant="contained">
+        {' '}
+        Update preferences{' '}
+      </Button>
+    </form>
+    <div>
+      Alert me at
+      <LocalizationProvider dateAdapter={DateAdapter}>
+        <TimePicker
+          label="Time"
+          value={value}
+          onChange={handleTimePicker}
+          renderInput={(params) => <TextField {...params} />}
+          shouldDisableTime={(timeValue, clockType) => {
+            if (
+              clockType === 'minutes' &&
+              !(timeValue <= 4 || timeValue >= 56 || (timeValue >= 26 && timeValue <= 34))
+            ) {
+              return true;
+            }
+
+            return false;
+          }}
+        />
+      </LocalizationProvider>
+      when
+      <FoodSelect />
+      is available at
+      <FormControl fullWidth>
+        <InputLabel id="demo-simple-select-label">Age</InputLabel>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={age}
+          label="Age"
+          onChange={handleChange}
+        >
+          <MenuItem value={10}>Breakfast</MenuItem>
+          <MenuItem value={20}>Lunch</MenuItem>
+          <MenuItem value={30}>Dinner</MenuItem>
+        </Select>
+      </FormControl>{' '}
+      With this message
+      <TextField
+        placeholder={'$food is at $meal in $locations.'}
+        helperText="You can use the variables '$food' '$meal' '$locations'"
+      ></TextField>
+    </div>
+    <div> Added alerts> </div>
+    <div>TODO for alERT IN ALERTS</div>
+    <Button> Add another alert </Button>
+    <form></form>
+  </>
+) : (
+  <>
+    <button onClick={handleOpenID}> Please sign in with your illinois GMAIL </button>
+    <div>{text}</div>
+  </>
+)
+}
