@@ -47,7 +47,8 @@ In a nutshell, we configure an email provider to send email from, and then the l
 
 After some playing around, I was successfully sending texts!
 
-[nestor screenshot picture]
+![](texts.jpg)
+ignore the message contents please
 
 Unfortunately, this method has some drawbacks:
 
