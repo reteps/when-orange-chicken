@@ -142,15 +142,24 @@ Since Flutter is such a new language, reverse-engineering support is sparse: [Do
 
 Luckily, we aren't the only person to attempt dart SSL bypassing:
 
-*link to OG articles*
+These 4 articles greatly helped me get it working.
++ https://nachiketrathod.com/Intercepting-Flutter-Android-Application/
++ https://medium.com/@ryanfabella/bypass-ssl-pinning-flutter-didevice-x86-64-avd-d319343b0039
++ https://id.horangi.com/blog/bypass-ssl-pinning-di-flutter-library/
++ https://blog.nviso.eu/2020/05/20/intercepting-flutter-traffic-on-android-x64/
 
-*code screenshots*
+First, I tracked down the function in my version of flutter:
+![](ghidra.png)
 
-And after a TON of trial and error, we finally get it working!!!
+This was my final exploit, a modified version of the Horangi script.
+![](frida.png)
+![](frida_run.png)
 
-*burp screenshot*
+And we are rewarded with some sweet sweet burp logs!
 
+![](burp_req.png)
 And find... unauthenticated mobile API endpoints
+
 ![](Pasted_image_20211021015012.png)
 
 A nice prize after so much work :)
