@@ -7,4 +7,8 @@ typings/
 
 # Node.js dependency directory
 node_modules/
-**/twilio.js
+src/twilio.ts
+
+# Firebase
+
+firebase-debug.log
