@@ -1,5 +1,5 @@
 // import './App.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import axios from 'axios';
 import { provider, db } from 'utils/firebase';
 // import getMenu from './utils/food';
@@ -12,7 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import Button from '@mui/material/Button';
-import { IconButton, TextField, Toolbar } from '@mui/material';
+import { IconButton, TextField, Toolbar, Typography } from '@mui/material';
 import TimePicker from '@mui/lab/TimePicker';
 import DateAdapter from '@mui/lab/AdapterDayjs';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
@@ -20,16 +20,60 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import AppBar from '@mui/material/AppBar'
+import AppBar from '@mui/material/AppBar';
+import { Snackbar } from '@mui/material';
 import FoodSelect from 'components/FoodSelect';
+import styled from 'styled-components';
+import MuiAlert from '@mui/material/Alert';
+import { Link, Container } from '@mui/material';
+import { Google as GoogleIcon } from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import MainApp from 'components/MainApp';
+import CustomTheme from 'components/CustomTheme';
+const Alert = forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
+
+const Styled = {
+  Header: styled(Typography)`
+    font-family: 'Comic Sans MS', 'Comic Sans';
+    flex-grow: 1;
+  `,
+  Container: styled.div`
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  `,
+  SignInContainer: styled(Container)`
+    display: flex;
+    flex-grow: grow;
+    height: 100%;
+  `,
+};
 function App() {
   const auth = getAuth();
-  const [value, setValue] = useState(new Date('2014-08-18T12:00:00'));
   const [authorized, setAuthorized] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [food, setFood] = useState('');
-  const [age, setAge] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(null);
 
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setSnackbarOpen(null);
+  };
+  const handleSignout = (e) => {
+    return auth
+      .signOut()
+      .then(() => {
+        console.log(auth.currentUser);
+        setAuthorized(false);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+    // auth.currentUser = null;
+  };
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
       if (user) {
@@ -39,92 +83,89 @@ function App() {
       }
     });
   });
-  const [text, setText] = useState('value');
-  const handleSignout = (e) => {
-    return auth
-      .signOut()
-      .then(() => {
-        console.log(auth.currentUser);
-        setAuthorized(false);
-        setText('Signed out.');
-      })
-      .catch((e) => {
-        console.error(e);
-      });
-    // auth.currentUser = null;
-  };
-  const handleTimePicker = (newValue) => {
-    let getRoundedDate = (minutes, d) => {
-      let ms = 1000 * 60 * minutes; // convert minutes to ms
-      let roundedDate = new Date(Math.round(d.toDate().getTime() / ms) * ms);
-
-      return roundedDate;
-    };
-    setValue(getRoundedDate(30, newValue));
-  };
   const handleOpenID = (e) => {
     console.log('Clicked');
     setPersistence(auth, browserLocalPersistence).then(async () => {
       try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        console.log('currentuser', auth.currentUser);
-        if (!user.email.includes('illinois.edu')) {
+        if (!user.email.includes('@illinois.edu')) {
           console.log();
           handleSignout().then(() => {
-            setText('That is not an illinois gmail, signing you out again.');
+            setSnackbarOpen('That is not an illinois gmail, signing you out again.');
+            setAuthorized(false);
           });
           return;
+        } else {
+          setAuthorized(true);
         }
-        setAuthorized(true);
-        setText('Signed in successfully');
       } catch (error) {
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log(errorMessage);
-        // Handle Errors here.
-
-        // The email of the user's account used.
-        // const email = error.email;
-        // The AuthCredential type that was used.
-        // const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
+        setSnackbarOpen(errorMessage);
       }
     });
   };
-  const updatePrefs = async (e) => {
-    e.preventDefault();
-    console.log('updated');
-    console.log(food);
-    console.log(phoneNumber);
-    await setDoc(doc(db, 'users', auth.currentUser.email), {
-      email: auth.currentUser.email,
-      phoneNumber,
-      food,
-    });
-  };
-  const getMenuWrapper = async () => {
-    const today = new Date().toLocaleDateString().replaceAll('/', '-');
-    const menuItems = (await axios.get('/api/list/' + today)).data.map((item) => item);
-    console.log(menuItems);
-  };
 
-  const handleChange = (event) => {
-    setAge(event.target.value);
-  };
+  const SignIn = (
+    <Styled.SignInContainer component="main" maxWidth="sm">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        sx={{
+          flexGrow: 1,
+          height: '100%',
+          flexDirection: 'column',
+        }}
+      >
+        <Typography>
+          When Orange Chicken is a project to send you text notification whenever dining halls have
+          an item on the menu. For example, you could set up an alert to send "ORANGE CHICKEN!!!!"
+          whenever the Ike dining hall has Orange Chicken for lunch or dinner. This project is
+          completely open source and is viewable{' '}
+          <Link href="https://github.com/reteps/when-orange-chicken" target="_blank" rel="noopener">
+            here
+          </Link>
+          .
+        </Typography>
+        <Box sx={{ marginTop: '2em' }}>
+          <Button onClick={handleOpenID} variant="outlined" startIcon={<GoogleIcon />} size="large">
+            {' '}
+            Sign in with Google@illinois{' '}
+          </Button>
+        </Box>
+      </Box>
+    </Styled.SignInContainer>
+  );
 
   return (
-    <div className="App">
-      <AppBar>
-        <Toolbar>
-          <IconButton>
-            <MenuIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      {authorized ? <MainApp /> :}
-      <button onClick={getMenuWrapper}> fuck you </button>
-    </div>
+    <Styled.Container className="App">
+      <CustomTheme>
+        <AppBar position="sticky">
+          <Toolbar>
+            <Styled.Header>When Orange Chicken??</Styled.Header>
+            {authorized && (
+              <Button onClick={handleSignout} color="inherit">
+                {' '}
+                Sign out{' '}
+              </Button>
+            )}
+          </Toolbar>
+        </AppBar>
+        {authorized ? <MainApp /> : SignIn}
+        <Snackbar
+          open={snackbarOpen !== null}
+          autoHideDuration={6000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert onClose={handleSnackbarClose} severity="error" sx={{ width: '100%' }}>
+            {snackbarOpen}
+          </Alert>
+        </Snackbar>
+      </CustomTheme>
+    </Styled.Container>
   );
 }
 
