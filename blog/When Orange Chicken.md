@@ -150,7 +150,8 @@ And after a TON of trial and error, we finally get it working!!!
 
 *burp screenshot*
 
-An]( find... unauthenticated mobile API endpoints!![[Pasted_image_20211021015012.png)
+And find... unauthenticated mobile API endpoints
+![](Pasted_image_20211021015012.png)
 
 A nice prize after so much work :)
 
@@ -178,6 +179,7 @@ After this point, I decided that I wanted to turn this project into a full webap
 |Database|Firebase|I wanted to try a new technology for this project
 |Front-End|React + Next.JS + MaterialUI|Familiar with React, wanted to try SSR (Next.JS)
 |Hosting|Firebase hosting|Try it out
+
 I also made some other decisions: Obviously this webapp would be able to do more than just Orange Chicken, will provide some needed customization, and I will try to store all the data I will need in `Firestore`, and use `Cloud Functions` for other tasks, like sending messages and fetching the menu for the day.
 
 
@@ -281,7 +283,7 @@ root
 The main issue I was facing was in the UI, there was no easy way to display all food elements without performing a metric ton of queries.
 
 After opening a couple tabs,
-![](Pasted_image_20211021003947.png]], the limits of firestore querying finally drove me t)StackOverflow, where I got answered by this absolute legend: ![[Pasted_image_2021102102470)png]]
+![](Pasted_image_20211021003947.png), the limits of firestore querying finally drove me to StackOverflow, where I got answered by this absolute legend: ![](Pasted_image_20211021024700.png)
 
 He gave me a pretty crazy looking path structure to use, `/food/{date_doc}/meals/{meal_doc}/items/{item_doc}`, but after thinking it out on paper, I figured out a data structure for the food elements, as well how to query for food in this structure based on my alerts.
 ![](Pasted_image_20211021022927.png)
