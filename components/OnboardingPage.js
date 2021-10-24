@@ -1,11 +1,10 @@
-import React, { useCallback } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
-import { useState } from 'react';
-import styled from 'styled-components';
+import { Container, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
-import { Container, IconButton, TextField, Toolbar, Typography, Box } from '@mui/material';
+import { Input } from 'components/Input';
 import { getAuth } from 'firebase/auth';
-import { useForm, useController } from 'react-hook-form';
+import React, { useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import styled from 'styled-components';
 
 const Styled = {
   FormContainer: styled(Container)`
@@ -23,22 +22,6 @@ const Styled = {
   `,
   OrangeButton: styled(Button),
 };
-// https://react-hook-form.com/get-started#IntegratingwithUIlibraries
-function Input({ control, name, rules, defaultValue, ...props }) {
-  const {
-    field: { ref, ...inputProps },
-    fieldState: { invalid, isTouched, isDirty },
-    formState: { touchedFields, dirtyFields },
-  } = useController({
-    name,
-    control,
-    rules: rules || { required: true },
-    defaultValue: defaultValue || '',
-  });
-
-  return <TextField {...inputProps} {...props} inputRef={ref} />;
-}
-
 function OnboardingPage({ setOrangeChicken, setCompletedOnboarding, ...props }) {
   const {
     handleSubmit,

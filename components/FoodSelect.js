@@ -1,15 +1,5 @@
+import { Dialog, DialogTitle, ListItem, ListItemButton, ListItemText } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { db } from '../utils/firebase';
-import { doc, getDoc, collectionGroup, query, getDocs } from 'firebase/firestore';
-import {
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-} from '@mui/material';
 import { FixedSizeList } from 'react-window';
 
 function FoodSelect({ open, handleClose }) {

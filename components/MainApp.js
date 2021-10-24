@@ -1,16 +1,11 @@
-import React from 'react';
-import { useEffect, useState, forwardRef } from 'react';
-import axios from 'axios';
-import { db } from 'utils/firebase';
-// import getMenu from './utils/food';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-
-import OnboardingPage from 'components/OnboardingPage';
 import AlertPage from 'components/AlertPage';
-import {
-  getAuth,
-  // GoogleAuthProvider,
-} from 'firebase/auth';
+import OnboardingPage from 'components/OnboardingPage';
+import { getAuth } from 'firebase/auth';
+// import getMenu from './utils/food';
+import { doc, getDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { db } from 'utils/firebase';
+
 function MainApp() {
   const [orangeChicken, setOrangeChicken] = useState(false);
   const auth = getAuth();
