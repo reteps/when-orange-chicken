@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "host": "next export && firebase deploy --only hosting"
+    "host": "next build && next export && firebase deploy --only hosting"
   },
   "dependencies": {
     "@date-io/dayjs": "^2.11.0",
