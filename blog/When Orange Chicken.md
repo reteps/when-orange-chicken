@@ -297,6 +297,8 @@ He gave me a pretty crazy looking path structure to use, `/food/{date_doc}/meals
 When you use paper for programming, you know it's a complicated problem
 
 
-### Final Strides
+### Finalization
 
-On Sunday, I started cleanup up some of the cloud functions and testing the React / Firebase stuff together. Squashed a lot of bugs :)
+I started working on some of the cloud functions as well as making the basic UI work. While it didn't look great at this point, it was essentially fully functional.
+
+![](close.png)
