@@ -1,32 +1,63 @@
-import { Dialog, DialogTitle, ListItem, ListItemButton, ListItemText } from '@mui/material';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Button,
+  DialogActions,
+  TextField,
+  InputAdornment,
+} from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { FixedSizeList } from 'react-window';
-
-function FoodSelect({ open, handleClose }) {
+import SearchIcon from '@mui/icons-material/Search';
+import { db } from 'utils/firebase';
+import { query, collectionGroup, getDocs } from 'firebase/firestore';
+function FoodSelect({ open, handleClose, onFoodSelect }) {
   const [items, setItems] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [search, setSearch] = useState(null);
+  const [filteredItems, setFilteredItems] = useState([]);
 
+  useEffect(() => {
+    setFilteredItems(items.filter((v) => search === null || v.name.match(new RegExp(search, 'i'))));
+  }, [items, search]);
   useEffect(async () => {
     console.log('Running food items query');
     const today = new Date().toLocaleDateString().replaceAll('/', '-');
-    // const foodItems = query(collectionGroup(db, 'items'));
-    // const allFoodItems = await getDocs(foodItems);
-    const allFoodItems = [{ id: 'food1' }, { id: 'food2' }, { id: 'food3' }];
-    const tempItems = new Set();
+    const foodItems = query(collectionGroup(db, 'items'));
+    const allFoodItems = await getDocs(foodItems);
+    // const allFoodItems = [{ id: 'food1' }, { id: 'food2' }, { id: 'food3' }];
+    const tempItems = {};
     allFoodItems.forEach((doc) => {
-      for (var i = 0; i < 30; i++) {
-        tempItems.add(i.toString());
+      const { locations, name } = doc.data();
+      if (tempItems[name] !== undefined) {
+        locations.forEach((l) => tempItems[name].add(l));
+      } else {
+        tempItems[name] = new Set(locations);
       }
-      // console.log(doc.id, ' => ', doc.data());
     });
-    setItems([...tempItems]);
+    const itemList = Object.entries(tempItems).map(([key, value]) => ({
+      name: key,
+      locations: value,
+    }));
+    console.log(itemList);
+    setItems(itemList);
   }, []);
 
   const FoodItem = ({ index, style }) => {
     return (
       <ListItem style={style} key={index} component="div" disablePadding>
-        <ListItemButton onClick={() => setSelected(index)}>
-          <ListItemText primary={items[index]} />
+        <ListItemButton
+          selected={selectedIndex == index}
+          onClick={() => {
+            console.log(index);
+            setSelectedIndex(index);
+          }}
+        >
+          <ListItemText primary={filteredItems[index].name} />
         </ListItemButton>
       </ListItem>
     );
@@ -34,15 +65,52 @@ function FoodSelect({ open, handleClose }) {
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle> Select Food to get an alert for </DialogTitle>
-      <FixedSizeList
-        itemSize={40}
-        itemCount={items.length}
-        overscanCount={5}
-        height={400}
-        width={360}
-      >
-        {FoodItem}
-      </FixedSizeList>
+      <DialogContent>
+        <TextField
+          sx={{ marginTop: '1em' }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          type="search"
+          label="Search..."
+        />
+        <FixedSizeList
+          itemSize={40}
+          itemCount={filteredItems.length}
+          overscanCount={5}
+          height={400}
+          width={360}
+        >
+          {FoodItem}
+        </FixedSizeList>
+      </DialogContent>
+      <DialogActions>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={() => handleClose(true)}
+          sx={{ marginRight: '2em' }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          disabled={selectedIndex === null}
+          onClick={() => {
+            onFoodSelect(filteredItems[selectedIndex]);
+            handleClose(true);
+          }}
+        >
+          Select
+        </Button>
+      </DialogActions>
     </Dialog>
     // <Select
     //   labelId="demo-simple-select-label"

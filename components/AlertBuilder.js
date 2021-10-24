@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Button from '@mui/material/Button';
-import { TextField, Container } from '@mui/material';
+import { TextField, Container, Box, Typography } from '@mui/material';
 import TimePicker from '@mui/lab/TimePicker';
 import DateAdapter from '@mui/lab/AdapterDayjs';
+import Grid from '@mui/material/Grid';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -15,12 +16,19 @@ import { db } from 'utils/firebase';
 import Select from 'react-select';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-
+import { withSnackbar } from 'components/SnackbarWrapper';
 export const Styled = {
   ButtonContainer: styled(Container)`
     display: flex;
     flex-direction: row;
-    justify-content: space-apart;
+    justify-content: center;
+  `,
+  Box: styled(Box)`
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    align-items: baseline;
+    padding-top: 0.5em;
   `,
 };
 
@@ -31,20 +39,18 @@ const getRoundedDate = (minutes, d) => {
   return roundedDate;
 };
 
-function AlertBuilder({ addAlert, phoneNumber, orangeChicken }) {
-  const [time, setTime] = useState(new Date());
+function AlertBuilder({ addAlert, phoneNumber, orangeChicken, snackbarShowMessage }) {
+  const [time, setTime] = useState(orangeChicken ? '16:00' : '11:00');
   const [food, setFood] = useState(orangeChicken ? 'Orange Chicken' : '');
-  const [meal, setMeal] = useState(orangeChicken ? 'Dinner' : '');
+  const [meal, setMeal] = useState(orangeChicken ? 'Dinner' : 'Breakfast');
   const [message, setMessage] = useState('$food ');
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [open, setOpen] = useState(false);
-  const handleTimePicker = (newValue) => {
-    setTime(getRoundedDate(30, newValue));
-  };
-
+  const [lastTestCall, setLastTestCall] = useState(null);
+  // need to rate limit 'test' button every 30 seconds
   useEffect(() => {
-    setMessage(`${food} is at ${meal} in ${selectedLocations?.join(',')}.`);
+    setMessage(`${food} at ${meal} in ${selectedLocations?.map((l) => l.shortName).join(',')}`);
   }, [food, meal, selectedLocations]);
   useEffect(async () => {
     const locationRef = query(collection(db, 'locations'));
@@ -56,6 +62,19 @@ function AlertBuilder({ addAlert, phoneNumber, orangeChicken }) {
   }, []);
 
   const testAlert = async () => {
+    const currentTime = new Date();
+    console.log((currentTime - lastTestCall) / 1000);
+    if (lastTestCall && (currentTime - lastTestCall) / 1000 < 30) {
+      const timeDiff = 30 - Math.round((currentTime - lastTestCall) / 1000);
+      snackbarShowMessage(
+        `Being rate limited, please try again in ${timeDiff} second${timeDiff == 1 ? '' : 's'}`,
+        'error',
+        6000,
+      );
+      return;
+    }
+
+    setLastTestCall(currentTime);
     const body = {
       to: `+1${phoneNumber}`,
       body: message,
@@ -73,7 +92,8 @@ function AlertBuilder({ addAlert, phoneNumber, orangeChicken }) {
     return Math.round(x / 30) * 30;
   };
   const saveAlert = async () => {
-    const timeAsRounded = time.getHours() + round30(time.getMinutes()) / 60;
+    const [hours, minutes] = time.split(':').map((v) => parseInt(v));
+    const timeAsRounded = hours + round30(minutes) / 60;
     const firebaseKey = uuidv4();
     const body = {
       food,
@@ -81,7 +101,7 @@ function AlertBuilder({ addAlert, phoneNumber, orangeChicken }) {
       message,
       time: timeAsRounded,
       meal,
-      locations: selectedLocations,
+      locations: selectedLocations.map((l) => l.name),
     };
 
     await setDoc(doc(db, 'alerts', firebaseKey), body);
@@ -101,73 +121,88 @@ function AlertBuilder({ addAlert, phoneNumber, orangeChicken }) {
 
   return (
     <form>
-      Alert me at
-      <LocalizationProvider dateAdapter={DateAdapter}>
-        <TimePicker
-          label="Time"
-          value={time}
-          onChange={handleTimePicker}
-          renderInput={(params) => <TextField {...params} />}
-          shouldDisableTime={(timeValue, clockType) => {
-            if (
-              clockType === 'minutes' &&
-              !(timeValue <= 4 || timeValue >= 56 || (timeValue >= 26 && timeValue <= 34))
-            ) {
-              return true;
-            }
-
-            return false;
-          }}
-        />
-      </LocalizationProvider>
-      when
-      <Button variant="outlined" onClick={() => setOpen(true)}>
-        {food || 'Select Food'}
-      </Button>
-      <FoodSelect
-        open={open}
-        handleClose={() => setOpen(false)}
-        onFoodSelect={(food) => setFood(food)}
-      />
-      is available at
-      <FormControl>
-        <Select
-          options={['Breakfast', 'Lunch', 'Dinner'].map((m) => ({ value: m, label: m }))}
-          label="meal"
-          defaultValue={{ value: 'Breakfast', label: 'Breakfast' }}
-          onChange={handleMealChange}
-        />
-      </FormControl>
-      at{' '}
-      <FormControl>
-        <Select
-          options={locations.map((location) => ({
-            value: location.name,
-            label: location.shortName,
-          }))}
-          setValue={(e) => {
-            console.log(e);
-          }}
-          onChange={handleLocationsChange}
-          isMulti
-        />
-      </FormControl>
-      these locations. With this message
-      <TextField
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        variant="standard"
-      ></TextField>
-      <Styled.ButtonContainer>
-        <Button variant="outlined" color="secondary" onClick={testAlert}>
-          Test Alert*
-        </Button>
-        <Button variant="contained" color="primary" onClick={saveAlert}>
-          Save Alert
-        </Button>
-      </Styled.ButtonContainer>
+      <Container maxWidth="md">
+        <Styled.Box>
+          <Typography>Alert me at</Typography>
+          <TextField
+            id="time"
+            label="Time"
+            value={time}
+            type="time"
+            defaultValue="07:30"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            inputProps={{
+              step: 60 * 30, // 30 min
+            }}
+            // sx={{ width: 150 }}
+          />
+        </Styled.Box>
+        <Styled.Box>
+          <Typography>when</Typography>
+          <Button variant="outlined" onClick={() => setOpen(true)}>
+            {food || 'Select Food'}
+          </Button>
+          <FoodSelect
+            open={open}
+            handleClose={() => setOpen(false)}
+            onFoodSelect={(food) => setFood(food.name)}
+          />
+        </Styled.Box>
+        <Styled.Box>
+          <Typography>is available at</Typography>
+          <FormControl>
+            <Select
+              options={['Breakfast', 'Lunch', 'Dinner'].map((m) => ({ value: m, label: m }))}
+              label="meal"
+              defaultValue={{ value: meal, label: meal }}
+              onChange={handleMealChange}
+            />
+          </FormControl>
+        </Styled.Box>
+        <Styled.Box>
+          <Typography>at </Typography>
+          <FormControl>
+            <Select
+              options={locations.map((location) => ({
+                value: location,
+                label: location.shortName,
+              }))}
+              setValue={(e) => {
+                console.log(e);
+              }}
+              onChange={handleLocationsChange}
+              isMulti
+            />
+          </FormControl>
+        </Styled.Box>
+        <Styled.Box>
+          <Typography>With this message</Typography>
+          <TextField
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            variant="standard"
+          ></TextField>
+        </Styled.Box>
+        <Styled.Box>
+          <Styled.ButtonContainer>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={testAlert}
+              sx={{ marginRight: '2em' }}
+            >
+              Test Alert*
+            </Button>
+            <Button variant="contained" color="primary" onClick={saveAlert}>
+              Save Alert
+            </Button>
+          </Styled.ButtonContainer>
+        </Styled.Box>
+      </Container>
     </form>
   );
 }
 
-export default AlertBuilder;
+export default withSnackbar(AlertBuilder);

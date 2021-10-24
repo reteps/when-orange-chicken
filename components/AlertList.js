@@ -12,7 +12,7 @@ function AlertList({ alerts, setAlerts, ...props }) {
 
   return (
     <>
-      {alerts.length > 0 && <Typography> Already Created Alerts </Typography>}
+      {alerts.length > 0 && <Typography variant="h5"> Already Created Alerts </Typography>}
       <List>
         {alerts.map((alert) => {
           return (
@@ -29,7 +29,7 @@ function AlertList({ alerts, setAlerts, ...props }) {
               }
             >
               <ListItemText>
-                {alert.food} - {alert.meal} - {alert.locations.join(',')}
+                {alert.food} - {alert.meal} - "{alert.message}"
               </ListItemText>
             </ListItem>
           );
