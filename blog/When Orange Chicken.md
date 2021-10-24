@@ -15,11 +15,13 @@ And so that Monday evening, I started some investigative work.
 
 ![](Pasted_image_20211021005300.png)
 
-The first thing I looked at was how I could even send these SMS messages for cheap (or even free!). After some searching around, it appeared that no one wanted to let me send it from a *phone number* for free. However, there were projects that use the carrier specific sms emails to send your message.
+The first thing I looked at was how I could even send these SMS messages for cheap (or even free!). After some searching around, it appears that there doesn't exist any service for free SMS messages. However, there were projects that use the carrier specific sms emails to send your message.
+
+Basically, most major carriers have an email that if sent to `%s@carrier` will send a text from your email to that person as SMS!
 
 The most popular of these is [textbelt](https://github.com/typpo/textbelt). 
 
-In a nutshell, we configure an email provider to send email from, and then the library will send out our message as an email to a preconfigured list of email addresses where `%s` is the phone number you want a message to:
+In a nutshell, we configure an email to send email from, and then the library will send out our message as an email to a list of carrier email addresses.
 
 ```js
   us: [
@@ -45,28 +47,24 @@ In a nutshell, we configure an email provider to send email from, and then the l
 ```
 (A snippet of https://github.com/typpo/textbelt/blob/master/lib/providers.js)
 
-After some playing around, I was successfully sending texts!
+After some playing around, I was successfully sending texts to some friends!
 
 ![](texts.jpg)
 ignore the message contents please
 
-Unfortunately, this method has some drawbacks:
+Unfortunately, this method has a couple drawbacks:
 
-1) You are sending from an email, which looks really suspicious
-2) You are sending an email to ~20 carriers, when only one will get delivered.
-3) This doesn't scale well
+1) You are sending from an email, which isn't as good looking as sending from a phone number
+2) You are sending an email to ~20 carriers, when only one will get delivered. If you are paying for each email, this means that 1 text = 20 emails, so it's not as cost effective anymore.
 
-When I setup the email service, the easiest method was to connect my gmail account and use that as the SMS sender. I have since regretted that decision, as the 19/20 emails repeatedly bounce.
+When I setup the email service, the easiest method was to connect my gmail account and use that as the SMS sender. I have since regretted that decision.
 
 ![](Pasted_image_20211021010021.png)
 2 days after the experiment
 
-I later switched to mailgun, but I was not able to get the texts, even though the emails sent. I concluded that there must be some security protection against this sort of SMS spam* (or idk how mailgun works)
+I later attempted this method using mailgun, but I was not able to get the texts to go through, even though the emails sent. (Possible security protection / idk how mailgun works)
 
 ![](Pasted_image_20211021010305.png)
-
-*This claim requires further research, and I had already spent an hour trying to get it to work, and so I moved onto more interesting parts of this project to determine it's feasibility.
-
 ## Playing around with web APIs
 
 I then pivoted my attention towards the dining halls.
@@ -77,7 +75,6 @@ Top 10 photos taken before a steep academic decline
 The first spot I checked was the dining hall information page. Nothing special, but it could get the job done.
 
 ![](Pasted_image_20211021004839.png)
-A true work of art
 
 Unfortunately, after looking at the requests, we figure out that this is a .NET application and it doesn't use any APIs.
 
@@ -302,4 +299,4 @@ When you use paper for programming, you know it's a complicated problem
 
 ### Final Strides
 
-By Wednesday evening, I had already spent a ton of time on the project and wanted to finish it up soon.
+On Sunday, I started cleanup up some of the cloud functions and testing the React / Firebase stuff together. Squashed a lot of bugs :)

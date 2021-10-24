@@ -10,10 +10,11 @@ import FormControl from '@mui/material/FormControl';
 import FoodSelect from 'components/FoodSelect';
 import styled from 'styled-components';
 import { getAuth } from 'firebase/auth';
-import { query, collection, getDocs, getDoc, doc, where } from 'firebase/firestore';
+import { query, collection, getDocs, getDoc, doc, where, setDoc } from 'firebase/firestore';
 import { db } from 'utils/firebase';
 import Select from 'react-select';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 export const Styled = {
   ButtonContainer: styled(Container)`
@@ -30,7 +31,7 @@ const getRoundedDate = (minutes, d) => {
   return roundedDate;
 };
 
-function AlertBuilder({ setAlerts, orangeChicken }) {
+function AlertBuilder({ addAlert, phoneNumber, orangeChicken }) {
   const [time, setTime] = useState(new Date());
   const [food, setFood] = useState(orangeChicken ? 'Orange Chicken' : '');
   const [meal, setMeal] = useState(orangeChicken ? 'Dinner' : '');
@@ -38,7 +39,6 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [open, setOpen] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState(null);
   const handleTimePicker = (newValue) => {
     setTime(getRoundedDate(30, newValue));
   };
@@ -53,21 +53,6 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
     locations.forEach((location) => locationData.push(location.data()));
     console.log('Got these locations:', locationData);
     setLocations(locationData);
-  }, []);
-  useEffect(async () => {
-    const auth = getAuth();
-
-    console.log('AlertPage useEffect to get existing alerts & locations');
-    const userDoc = await getDoc(doc(db, `users/${auth.currentUser.email}`));
-    setPhoneNumber(userDoc.data().phoneNumber);
-
-    const userAlerts = await getDocs(
-      query(collection(db, 'alerts'), where('number', '==', phoneNumber)),
-    );
-    const data = [];
-    userAlerts.forEach((alert) => data.push(alert.data()));
-    console.log('Got these alerts:', data);
-    setAlerts(data);
   }, []);
 
   const testAlert = async () => {
@@ -99,8 +84,8 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
       locations: selectedLocations,
     };
 
-    await setDoc(doc(db, 'alerts', firebaseKey), ...body);
-    setAlerts([...alerts, { firebaseKey, ...body }]);
+    await setDoc(doc(db, 'alerts', firebaseKey), body);
+    addAlert({ firebaseKey, ...body });
 
     console.log(body);
   };
@@ -156,7 +141,10 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
       at{' '}
       <FormControl>
         <Select
-          options={locations.map((location) => ({ value: location.name, label: location.name }))}
+          options={locations.map((location) => ({
+            value: location.name,
+            label: location.shortName,
+          }))}
           setValue={(e) => {
             console.log(e);
           }}

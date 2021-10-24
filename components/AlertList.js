@@ -1,13 +1,15 @@
 import React from 'react';
-import { IconButton, ListItemText } from '@mui/material';
-import { List, ListItem } from '@mui/material';
+import { List, ListItem, ListItemText, IconButton, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import { db } from 'utils/firebase';
+import { collection, deleteDoc, doc } from 'firebase/firestore';
 function AlertList({ alerts, setAlerts, ...props }) {
   const deleteAlert = async (key) => {
-    await db.collection('alerts').doc(key).delete();
+    console.log(key);
+    await deleteDoc(doc(db, 'alerts', key));
     setAlerts(alerts.filter((a) => a.firebaseKey != key));
   };
+
   return (
     <>
       {alerts.length > 0 && <Typography> Already Created Alerts </Typography>}
