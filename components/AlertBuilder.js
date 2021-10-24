@@ -7,12 +7,14 @@ import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
 import FoodSelect from 'components/FoodSelect';
 import styled from 'styled-components';
 import { getAuth } from 'firebase/auth';
-import { query, collection, getDocs, getDoc } from 'firebase/firestore';
+import { query, collection, getDocs, getDoc, doc, where } from 'firebase/firestore';
 import { db } from 'utils/firebase';
+import Select from 'react-select';
+import axios from 'axios';
+
 export const Styled = {
   ButtonContainer: styled(Container)`
     display: flex;
@@ -36,7 +38,7 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [open, setOpen] = useState(false);
-
+  const [phoneNumber, setPhoneNumber] = useState(null);
   const handleTimePicker = (newValue) => {
     setTime(getRoundedDate(30, newValue));
   };
@@ -51,12 +53,17 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
     locations.forEach((location) => locationData.push(location.data()));
     console.log('Got these locations:', locationData);
     setLocations(locationData);
-
+  }, []);
+  useEffect(async () => {
     const auth = getAuth();
 
     console.log('AlertPage useEffect to get existing alerts & locations');
-    const userRef = query(collection(db, `users/${auth.currentUser.email}/alerts`));
-    const userAlerts = await getDocs(userRef);
+    const userDoc = await getDoc(doc(db, `users/${auth.currentUser.email}`));
+    setPhoneNumber(userDoc.data().phoneNumber);
+
+    const userAlerts = await getDocs(
+      query(collection(db, 'alerts'), where('number', '==', phoneNumber)),
+    );
     const data = [];
     userAlerts.forEach((alert) => data.push(alert.data()));
     console.log('Got these alerts:', data);
@@ -65,14 +72,17 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
 
   const testAlert = async () => {
     const body = {
-      to: '+17348814354',
-      body: 'Test alert',
+      to: `+1${phoneNumber}`,
+      body: message,
     };
 
     console.log(`Sending body: ${JSON.stringify(body)}`);
 
     // TODO rate limit
-    // await axios.post('https://us-central1-when-orange-chicken.cloudfunctions.net/sendMessage');
+    await axios.post(
+      'https://us-central1-when-orange-chicken.cloudfunctions.net/sendMessage',
+      body,
+    );
   };
   const round30 = (x) => {
     return Math.round(x / 30) * 30;
@@ -81,23 +91,27 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
     const timeAsRounded = time.getHours() + round30(time.getMinutes()) / 60;
     const firebaseKey = uuidv4();
     const body = {
-      firebaseKey,
       food,
+      phoneNumber,
       message,
       time: timeAsRounded,
       meal,
       locations: selectedLocations,
     };
 
-    setAlerts([...alerts, body]);
+    await setDoc(doc(db, 'alerts', firebaseKey), ...body);
+    setAlerts([...alerts, { firebaseKey, ...body }]);
+
     console.log(body);
   };
-  const handlemealChange = (event) => {
-    setMeal(event.target.value);
+  const handleMealChange = (meal) => {
+    // console.log(meal);
+    setMeal(meal.value);
   };
 
-  const handleLocationsChange = (event) => {
-    setSelectedLocations(event.target.value);
+  const handleLocationsChange = (locations) => {
+    // console.log(locations);
+    setSelectedLocations(locations.map((l) => l.value));
   };
 
   return (
@@ -132,35 +146,23 @@ function AlertBuilder({ setAlerts, orangeChicken }) {
       />
       is available at
       <FormControl>
-        <InputLabel id="demo-simple-select-label">meal</InputLabel>
         <Select
-          labelId="demo-simple-select-label"
-          value={meal}
+          options={['Breakfast', 'Lunch', 'Dinner'].map((m) => ({ value: m, label: m }))}
           label="meal"
-          onChange={handlemealChange}
-        >
-          <MenuItem value={'Breakfast'}>Breakfast</MenuItem>
-          <MenuItem value={'Lunch'}>Lunch</MenuItem>
-          <MenuItem value={'Dinner'}>Dinner</MenuItem>
-        </Select>
+          defaultValue={{ value: 'Breakfast', label: 'Breakfast' }}
+          onChange={handleMealChange}
+        />
       </FormControl>
       at{' '}
       <FormControl>
-        <InputLabel id="location-label">these locations</InputLabel>
         <Select
-          value={selectedLocations}
+          options={locations.map((location) => ({ value: location.name, label: location.name }))}
+          setValue={(e) => {
+            console.log(e);
+          }}
           onChange={handleLocationsChange}
-          labelId="location-label"
-          multiple
-        >
-          {locations.map((location) => {
-            return (
-              <MenuItem value={location.name} key={location.name}>
-                {location.name}
-              </MenuItem>
-            );
-          })}
-        </Select>
+          isMulti
+        />
       </FormControl>
       these locations. With this message
       <TextField

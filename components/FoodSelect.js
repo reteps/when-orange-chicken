@@ -4,6 +4,8 @@ import { FixedSizeList } from 'react-window';
 
 function FoodSelect({ open, handleClose }) {
   const [items, setItems] = useState([]);
+  const [selected, setSelected] = useState(null);
+
   useEffect(async () => {
     console.log('Running food items query');
     const today = new Date().toLocaleDateString().replaceAll('/', '-');
@@ -23,7 +25,7 @@ function FoodSelect({ open, handleClose }) {
   const FoodItem = ({ index, style }) => {
     return (
       <ListItem style={style} key={index} component="div" disablePadding>
-        <ListItemButton>
+        <ListItemButton onClick={() => setSelected(index)}>
           <ListItemText primary={items[index]} />
         </ListItemButton>
       </ListItem>

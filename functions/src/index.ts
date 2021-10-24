@@ -47,7 +47,7 @@ interface FoodElement {
 }
 
 /*interface Alert {
-  number: string
+  phoneNumber: string
   meal: string
   food: string
   locations: string[]
@@ -111,6 +111,8 @@ const sendMessageTwilio = (to : string, body : string) => {
 }
 
 export const sendMessage = functions.https.onRequest(async (req: any, res: any) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  
   if (!req.body.to || !req.body.body) {
     res.status(500).send('Error: req.body.to or req.body.body was not defined.')
     return
@@ -157,7 +159,7 @@ export const sendNotifications = functions.pubsub.schedule('0 2 * * *').onRun(as
   const today: string = d.toLocaleDateString().replace(/\//g, "-");
 
   const timeAsRounded = d.getHours() + round30(d.getMinutes()) / 60
-  const alerts = await db.collectionGroup('alerts').where('time', '==', timeAsRounded).get()
+  const alerts = await db.collection('alerts').where('time', '==', timeAsRounded).get()
   const alertsToSend: Promise<any>[] = []
 
   alerts.forEach(async alert => {
@@ -167,8 +169,8 @@ export const sendNotifications = functions.pubsub.schedule('0 2 * * *').onRun(as
       if (!ref.empty) {
         const match = ref.docs[0].data()
         const locationIntersection = alertData.locations.filter((value: string) => match.locations.includes(value))
-        console.log(`Sending Alert to ${alertData.number} because ${alertData.food} is at ${alertData.meal} at these locations: ${locationIntersection.join(',')}`)
-        return sendMessageTwilio('+1' + alertData.number, alertData.message)
+        console.log(`Sending Alert to ${alertData.phoneNumber} because ${alertData.food} is at ${alertData.meal} at these locations: ${locationIntersection.join(',')}`)
+        return sendMessageTwilio('+1' + alertData.phoneNumber, alertData.message)
       }
     })
     alertsToSend.push(alertPipeline)

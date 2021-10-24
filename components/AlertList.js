@@ -4,7 +4,8 @@ import { List, ListItem } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 function AlertList({ alerts, setAlerts, ...props }) {
-  const deleteAlert = (key) => {
+  const deleteAlert = async (key) => {
+    await db.collection('alerts').doc(key).delete();
     setAlerts(alerts.filter((a) => a.firebaseKey != key));
   };
   return (
